@@ -1,4 +1,7 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+
+const isProductionMode = process.env.NODE_ENV === 'production';
 
 export default {
   mode: process.env.NODE_ENV || 'development',
@@ -10,7 +13,12 @@ export default {
       },
       {
         test: /\.scss$/,
-        use: ['style-loader', 'css-loader', 'sass-loader', 'postcss-loader'],
+        use: [
+          isProductionMode ? MiniCssExtractPlugin.loader : 'style-loader',
+          'css-loader',
+          'sass-loader',
+          'postcss-loader',
+        ],
       },
     ],
   },
@@ -18,5 +26,6 @@ export default {
     new HtmlWebpackPlugin({
       template: 'index.html',
     }),
+    new MiniCssExtractPlugin(),
   ],
 };
