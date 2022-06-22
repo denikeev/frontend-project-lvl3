@@ -11,7 +11,7 @@ export default () => {
   };
 
   const state = onChange({
-    // valid: true,
+    valid: true,
     processState: 'filling',
     url: '',
     error: {},
@@ -36,11 +36,21 @@ export default () => {
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    state.processState = 'sending';
     const formData = new FormData(e.target);
     state.url = formData.get('url');
-    const error = validate(state);
-    state.error = error;
-    state.valid = isEmpty(error);
+    console.log('beforeValidate>>>', state.links);
+    validate(state).then((data) => {
+      state.valid = isEmpty(data);
+      console.log(data);
+      if (!state.valid) {
+        state.error = data;
+        console.log('error>>>', state.links);
+      }
+      if (state.valid) {
+        state.processState = 'sending';
+        state.links.push(state.url);
+        console.log('notError>>>', state.links);
+      }
+    });
   });
 };
