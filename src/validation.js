@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import onChange from 'on-change';
 import {
   string,
@@ -7,8 +8,15 @@ import {
 } from 'yup'; // сделать нужные
 import { isEmpty } from 'lodash';
 import view from './view.js';
+import resources from './locales/ru.js';
 
 export default () => {
+  const i18nInstance = i18n.createInstance();
+  i18nInstance.init({
+    lng: 'ru',
+    resources,
+  }).then((g) => g);
+  console.log(i18nInstance.t('key'));
   const baseSchema = string().url().required();
 
   const elements = {
