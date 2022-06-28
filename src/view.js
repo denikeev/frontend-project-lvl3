@@ -1,10 +1,11 @@
-import { has } from 'lodash';
+import { isEmpty } from 'lodash';
 
 const renderErrors = (elements, value, prevValue) => {
-  const fieldHadError = has(prevValue, 'message');
-  const fieldHasError = has(value, 'message');
-
+  const fieldHadError = !isEmpty(prevValue);
+  const fieldHasError = !isEmpty(value);
   if (!fieldHadError && !fieldHasError) {
+    elements.form.reset();
+    elements.url.focus();
     return;
   }
   if (fieldHadError && !fieldHasError) {
@@ -16,17 +17,15 @@ const renderErrors = (elements, value, prevValue) => {
     return;
   }
   if (fieldHadError && fieldHasError) {
-    const { message } = value;
     const feedback = document.querySelector('.feedback');
-    feedback.textContent = message;
+    feedback.textContent = value;
     return;
   }
 
   elements.url.classList.add('is-invalid');
-  const { message } = value;
   const feedback = document.createElement('p');
   feedback.classList.add('feedback', 'm-0', 'small', 'text-danger');
-  feedback.textContent = message;
+  feedback.textContent = value;
   elements.form.append(feedback);
 };
 

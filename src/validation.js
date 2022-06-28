@@ -1,14 +1,32 @@
+import i18n from 'i18next';
 import onChange from 'on-change';
 import {
   string,
   url, // eslint-disable-line
   required, // eslint-disable-line
   notOneOf, // eslint-disable-line
-} from 'yup'; // сделать нужные
+  setLocale, // eslint-disable-line
+} from 'yup';
 import { isEmpty } from 'lodash';
 import view from './view.js';
+import resources from './locales/ru.js';
 
 export default () => {
+  const i18nInstance = i18n.createInstance();
+  i18nInstance.init({
+    lng: 'ru',
+    resources,
+  });
+
+  setLocale({
+    mixed: {
+      notOneOf: () => ({ key: 'errors.notOneOf' }),
+    },
+    string: {
+      url: () => ({ key: 'errors.url' }),
+    },
+  });
+
   const baseSchema = string().url().required();
 
   const elements = {
@@ -24,7 +42,7 @@ export default () => {
       errors: {},
       links: [],
     },
-    view(elements),
+    view(elements, i18nInstance),
   );
 
   const validate = (currentUrl, urls) => {
@@ -32,7 +50,7 @@ export default () => {
     return schema
       .validate(currentUrl)
       .then(() => {})
-      .catch((e) => e);
+      .catch((e) => i18nInstance.t(e.message.key));
   };
 
   elements.form.addEventListener('submit', (e) => {
