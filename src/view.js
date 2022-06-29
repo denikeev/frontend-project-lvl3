@@ -1,9 +1,9 @@
 import { has } from 'lodash';
 
-const renderErrors = (elements, value, prevValue) => {
+const renderErrors = (elements, value, prevValue, i18nInstance) => {
   const fieldHadError = has(prevValue, 'message');
   const fieldHasError = has(value, 'message');
-
+  console.dir(value);
   if (!fieldHadError && !fieldHasError) {
     return;
   }
@@ -15,23 +15,22 @@ const renderErrors = (elements, value, prevValue) => {
     elements.url.focus();
     return;
   }
+  const errorType = value.type;
   if (fieldHadError && fieldHasError) {
-    const { message } = value;
     const feedback = document.querySelector('.feedback');
-    feedback.textContent = message;
+    feedback.textContent = i18nInstance.t(`errors.${errorType}`);
     return;
   }
 
   elements.url.classList.add('is-invalid');
-  const { message } = value;
   const feedback = document.createElement('p');
   feedback.classList.add('feedback', 'm-0', 'small', 'text-danger');
-  feedback.textContent = message;
+  feedback.textContent = i18nInstance.t(`errors.${errorType}`);
   elements.form.append(feedback);
 };
 
-export default (elements) => (path, value, prevValue) => {
+export default (elements, i18nInstance) => (path, value, prevValue) => {
   if (path === 'errors') {
-    renderErrors(elements, value, prevValue);
+    renderErrors(elements, value, prevValue, i18nInstance);
   }
 };
