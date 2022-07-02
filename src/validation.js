@@ -8,8 +8,11 @@ import {
   setLocale, // eslint-disable-line
 } from 'yup';
 import { isEmpty } from 'lodash';
+import axios from 'axios';
 import view from './view.js';
 import resources from './locales/ru.js';
+import parser from './parser.js';
+import genData from './genData.js';
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -41,6 +44,10 @@ export default () => {
       url: '',
       errors: {},
       links: [],
+      data: {
+        feeds: [],
+        posts: [],
+      },
     },
     view(elements, i18nInstance),
   );
@@ -63,6 +70,15 @@ export default () => {
       state.errors = data;
       if (state.valid) {
         state.links.push(state.url);
+        axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`)
+          .then((response) => {
+            const { contents } = response.data;
+            // console.log(contents);
+            const document = parser(contents);
+            console.log(document);
+            const test = genData(document, state.data);
+            console.log(test);
+          });
       }
     });
   });
