@@ -30,7 +30,7 @@ export default (document, data) => {
     null,
   );
   const description = channelDescription.singleNodeValue.textContent;
-  feeds.push({ title, description, id });
+  feeds.unshift({ title, description, id });
 
   const itemsTitlePath = '//channel/item/title';
   const itemTitles = document.evaluate(
@@ -50,21 +50,36 @@ export default (document, data) => {
     null,
   );
 
+  const itemsLinksPath = '//channel/item/link';
+  const itemLinks = document.evaluate(
+    itemsLinksPath,
+    document,
+    null,
+    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null,
+  );
+
   let currentTitle = itemTitles.iterateNext();
   let currentDescription = itemDescriptions.iterateNext();
+  let currentLink = itemLinks.iterateNext();
 
-  for (let ids = setId(posts); currentTitle && currentDescription; ids += 1) {
+  const newPosts = [];
+  for (let ids = setId(posts); currentTitle && currentDescription && currentLink; ids += 1) {
     const titles = currentTitle.textContent;
     const descriptions = currentDescription.textContent;
-    posts.push({
+    const link = currentLink.textContent;
+    newPosts.push({
       titles,
       descriptions,
       ids,
       feedId: id,
+      link,
     });
     currentTitle = itemTitles.iterateNext();
     currentDescription = itemDescriptions.iterateNext();
+    currentLink = itemLinks.iterateNext();
   }
+  posts.unshift(...newPosts);
 
   return { feeds, posts };
 };

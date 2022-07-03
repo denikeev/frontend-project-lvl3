@@ -11,8 +11,8 @@ import { isEmpty } from 'lodash';
 import axios from 'axios';
 import view from './view.js';
 import resources from './locales/ru.js';
-import parser from './parser.js';
-import genData from './genData.js';
+import parser, { isValidDocument } from './parser.js';
+import genFeeds from './genFeeds.js';
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -23,10 +23,10 @@ export default () => {
 
   setLocale({
     mixed: {
-      notOneOf: () => ({ key: 'errors.notOneOf' }),
+      notOneOf: () => ({ key: 'errors.validation.notOneOf' }),
     },
     string: {
-      url: () => ({ key: 'errors.url' }),
+      url: () => ({ key: 'errors.validation.url' }),
     },
   });
 
@@ -42,9 +42,13 @@ export default () => {
     {
       valid: true,
       url: '',
-      errors: {},
+      errors: {
+        validation: {},
+        network: false,
+        parsing: false,
+      },
       links: [],
-      data: {
+      feedsData: {
         feeds: [],
         posts: [],
       },
@@ -67,17 +71,23 @@ export default () => {
 
     validate(state.url, state.links).then((data) => {
       state.valid = isEmpty(data);
-      state.errors = data;
+      state.errors.validation = data;
       if (state.valid) {
         state.links.push(state.url);
         axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`)
           .then((response) => {
             const { contents } = response.data;
-            // console.log(contents);
             const document = parser(contents);
-            console.log(document);
-            const test = genData(document, state.data);
-            console.log(test);
+            if (isValidDocument(document)) {
+              state.feedsData = genFeeds(document, state.feedsData);
+            } else {
+              state.errors.parsing = i18nInstance.t('errors.parsing.err');
+            }
+          })
+          .catch((error) => {
+            if (error.response) {
+              state.errors.network = i18nInstance.t('errors.network.err');
+            }
           });
       }
     });
