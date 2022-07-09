@@ -14,6 +14,13 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
+// const checkUpd = (doc, stat) => {
+//   setTimeout(() => {
+//     stat = genFeeds(doc, stat);
+//     return checkUpd(doc, stat);
+//   }, 5000);
+// };
+
 export default () => {
   const i18nInstance = i18n.createInstance();
   i18nInstance.init({
@@ -80,7 +87,23 @@ export default () => {
               const { contents } = response.data;
               const document = parser(contents);
               if (isValidDocument(document)) {
-                state.feedsData = genFeeds(document, state.feedsData);
+                console.log('before>>>', state.feedsData);
+                const checkUpdates = (urls, period = 5000) => {
+                  let data = { feeds: [], posts: [] };
+                  urls.forEach((urla) => {
+                    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(urla)}`)
+                      .then((response) => {
+                        const { contents } = response.data;
+                        const document = parser(contents);
+                        data = genFeeds(document, data);
+                      });
+                  });
+                  console.log('data>>>>', data);
+                  console.log('state.feedsData>>>', state.feedsData);
+                  state.feedsData = data;
+                  setTimeout(() => checkUpdates(urls), period);
+                };
+                checkUpdates(state.links);
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
