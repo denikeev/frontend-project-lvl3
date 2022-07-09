@@ -1,29 +1,21 @@
 import { isEmpty } from 'lodash';
 
-const renderFeeds = (elements, value, prevValue) => {
-  const hasPrevValue = Boolean(prevValue);
-  if (hasPrevValue) {
-    document.body.lastChild.remove();
-  }
+const renderFeeds = (elements, value) => {
   const { feeds, posts } = value;
+  const { feeds: feedsContainer, posts: postsContainer } = elements;
 
-  const main = document.querySelector('.main');
-  const section = document.createElement('section');
-  section.classList.add('container');
-  const sectionHtml = `
-    <div class="row">
-      <div class="col-lg-8">
-        <h2 class="h4">Фиды</h2>
-        <ul class="feeds">
-        </ul>
-      </div>
-      <div class="col-lg-8">
-        <ul class="posts">
-        </ul>
-      </div>
-    </div>`;
-  section.innerHTML = sectionHtml;
-  main.after(section);
+  feedsContainer.innerHTML = '';
+  postsContainer.innerHTML = '';
+
+  const innerMarkup = '<h2 class="h4"></h2><ul></ul>';
+  feedsContainer.innerHTML = innerMarkup;
+  postsContainer.innerHTML = innerMarkup;
+  const feedsList = document.querySelector('.feeds > ul');
+  const postsList = document.querySelector('.posts > ul');
+  const feedsTitle = document.querySelector('.feeds > h2');
+  const postsTitle = document.querySelector('.posts > h2');
+  feedsTitle.textContent = 'Фиды';
+  postsTitle.textContent = 'Посты';
 
   const feedsContent = feeds.reduce((acc, feed) => `
     ${acc}
@@ -32,8 +24,7 @@ const renderFeeds = (elements, value, prevValue) => {
       <p class="small">${feed.description}</p>
     </li>`, '').trim();
 
-  const feedsElement = document.querySelector('.feeds');
-  feedsElement.innerHTML = feedsContent;
+  feedsList.innerHTML = feedsContent;
 
   const postsContent = posts.reduce((acc, post) => `
     ${acc}
@@ -41,8 +32,7 @@ const renderFeeds = (elements, value, prevValue) => {
       <a href=${post.link}>${post.titles}</a>
     </li>`, '');
 
-  const postsElement = document.querySelector('.posts');
-  postsElement.innerHTML = postsContent;
+  postsList.innerHTML = postsContent;
 };
 
 const renderErrors = (elements, value, prevValue) => {

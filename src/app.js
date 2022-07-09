@@ -14,6 +14,21 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
+const checkUpdates = (state, i18nInstance, period = 5000) => {
+  let data = state.feedsData;
+  const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+    .then((response) => {
+      const { contents } = response.data;
+      const document = parser(contents);
+      data = genFeeds(document, data);
+    }));
+
+  Promise.all(promises).then(() => {
+    state.feedsData = data;
+    setTimeout(() => checkUpdates(state, i18nInstance), period);
+  });
+};
+
 export default () => {
   const i18nInstance = i18n.createInstance();
   i18nInstance.init({
@@ -36,12 +51,15 @@ export default () => {
     form: document.getElementById('rss-form'),
     url: document.getElementById('url-input'),
     submit: document.querySelector('button[type="submit"]'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
   };
 
   const state = onChange(
     {
       valid: true,
       processState: 'filling',
+      checking: false,
       url: '',
       errors: {},
       links: [],
@@ -81,6 +99,10 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
+                if (!state.checking) {
+                  setTimeout(() => checkUpdates(state, i18nInstance), 5000);
+                  state.checking = true;
+                }
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
