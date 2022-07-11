@@ -7,6 +7,7 @@ const setId = (arr) => {
 };
 
 export default (document, data) => {
+  console.log(data);
   const { feeds, posts } = data;
   const channelTitlePath = '//channel/title';
   const channelDescriptionPath = '//channel/description';

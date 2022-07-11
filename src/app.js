@@ -14,9 +14,9 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
-const checkUpdates = (urls, stateData, period = 5000) => {
-  let data = { feeds: [], posts: [] };
-  urls.forEach((urla) => {
+const checkUpdates = (state, period = 5000) => {
+  let data = { feeds: [...state.feedsData.feeds], posts: [...state.feedsData.posts] };
+  state.links.forEach((urla) => {
     axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(urla)}`)
       .then((response) => {
         const { contents } = response.data;
@@ -24,8 +24,8 @@ const checkUpdates = (urls, stateData, period = 5000) => {
         data = genFeeds(document, data);
       });
   });
-  stateData = data;
-  setTimeout(() => checkUpdates(urls), period);
+  state.feedsData = data;
+  setTimeout(() => checkUpdates(state), period);
 };
 
 export default () => {
@@ -97,7 +97,10 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
-                // checkUpdates(state.links, state.feedsData);
+                if (state.processState !== 'checking') {
+                  setTimeout(() => checkUpdates(state), 5000);
+                  state.processState = 'checking';
+                }
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
