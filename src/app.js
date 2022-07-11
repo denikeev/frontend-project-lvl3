@@ -14,12 +14,19 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
-// const checkUpd = (doc, stat) => {
-//   setTimeout(() => {
-//     stat = genFeeds(doc, stat);
-//     return checkUpd(doc, stat);
-//   }, 5000);
-// };
+const checkUpdates = (urls, stateData, period = 5000) => {
+  let data = { feeds: [], posts: [] };
+  urls.forEach((urla) => {
+    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(urla)}`)
+      .then((response) => {
+        const { contents } = response.data;
+        const document = parser(contents);
+        data = genFeeds(document, data);
+      });
+  });
+  stateData = data;
+  setTimeout(() => checkUpdates(urls), period);
+};
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -43,6 +50,8 @@ export default () => {
     form: document.getElementById('rss-form'),
     url: document.getElementById('url-input'),
     submit: document.querySelector('button[type="submit"]'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
   };
 
   const state = onChange(
@@ -87,23 +96,8 @@ export default () => {
               const { contents } = response.data;
               const document = parser(contents);
               if (isValidDocument(document)) {
-                console.log('before>>>', state.feedsData);
-                const checkUpdates = (urls, period = 5000) => {
-                  let data = { feeds: [], posts: [] };
-                  urls.forEach((urla) => {
-                    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(urla)}`)
-                      .then((response) => {
-                        const { contents } = response.data;
-                        const document = parser(contents);
-                        data = genFeeds(document, data);
-                      });
-                  });
-                  console.log('data>>>>', data);
-                  console.log('state.feedsData>>>', state.feedsData);
-                  state.feedsData = data;
-                  setTimeout(() => checkUpdates(urls), period);
-                };
-                checkUpdates(state.links);
+                state.feedsData = genFeeds(document, state.feedsData);
+                // checkUpdates(state.links, state.feedsData);
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
