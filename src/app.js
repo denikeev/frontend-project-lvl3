@@ -15,17 +15,19 @@ import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
 const checkUpdates = (state, period = 5000) => {
-  let data = { feeds: [...state.feedsData.feeds], posts: [...state.feedsData.posts] };
-  state.links.forEach((urla) => {
-    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(urla)}`)
-      .then((response) => {
-        const { contents } = response.data;
-        const document = parser(contents);
-        data = genFeeds(document, data);
-      });
+  // let data = { feeds: [...state.feedsData.feeds], posts: [] };
+  let data = state.feedsData;
+  const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+    .then((response) => {
+      const { contents } = response.data;
+      const document = parser(contents);
+      data = genFeeds(document, data);
+    }));
+  Promise.all(promises).then(() => {
+    console.log('dataGenereated>>>', data);
+    state.feedsData = data;
+    setTimeout(() => checkUpdates(state), period);
   });
-  state.feedsData = data;
-  setTimeout(() => checkUpdates(state), period);
 };
 
 export default () => {
@@ -58,6 +60,7 @@ export default () => {
     {
       valid: true,
       processState: 'filling',
+      checking: false,
       url: '',
       errors: {},
       links: [],
@@ -97,9 +100,9 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
-                if (state.processState !== 'checking') {
+                if (!state.checking) {
                   setTimeout(() => checkUpdates(state), 5000);
-                  state.processState = 'checking';
+                  state.checking = true;
                 }
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');

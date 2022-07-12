@@ -2,12 +2,10 @@ const setId = (arr) => {
   if (arr.length === 0) {
     return 1;
   }
-  const lastId = arr.slice(-1).id;
-  return lastId + 1;
+  return arr.length + 1;
 };
 
 export default (document, data) => {
-  console.log(data);
   const { feeds, posts } = data;
   const channelTitlePath = '//channel/title';
   const channelDescriptionPath = '//channel/description';
@@ -21,17 +19,26 @@ export default (document, data) => {
   );
 
   const title = channelTitle.singleNodeValue.textContent;
-  const id = setId(feeds);
+  let id;
+  if (!feeds.some((feed) => feed.title === title)) {
+    id = setId(feeds);
 
-  const channelDescription = document.evaluate(
-    channelDescriptionPath,
-    document,
-    null,
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null,
-  );
-  const description = channelDescription.singleNodeValue.textContent;
-  feeds.unshift({ title, description, id });
+    const channelDescription = document.evaluate(
+      channelDescriptionPath,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null,
+    );
+    const description = channelDescription.singleNodeValue.textContent;
+    feeds.unshift({ title, description, id });
+  } else {
+    feeds.forEach((feed) => {
+      if (feed.title === title) {
+        id = feed.id;
+      }
+    });
+  }
 
   const itemsTitlePath = '//channel/item/title';
   const itemTitles = document.evaluate(
@@ -69,18 +76,23 @@ export default (document, data) => {
     const titles = currentTitle.textContent;
     const descriptions = currentDescription.textContent;
     const link = currentLink.textContent;
-    newPosts.push({
-      titles,
-      descriptions,
-      ids,
-      feedId: id,
-      link,
-    });
+    if (!posts.some((post) => post.link === link)) {
+      newPosts.push({
+        titles,
+        descriptions,
+        ids,
+        feedId: id,
+        link,
+      });
+    }
     currentTitle = itemTitles.iterateNext();
     currentDescription = itemDescriptions.iterateNext();
     currentLink = itemLinks.iterateNext();
   }
-  posts.unshift(...newPosts);
+  if (newPosts.length !== 0) {
+    posts.unshift(...newPosts);
+  }
 
+  console.log({ feeds, posts });
   return { feeds, posts };
 };
