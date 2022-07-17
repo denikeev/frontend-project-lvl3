@@ -28,11 +28,21 @@ const renderFeeds = (elements, value) => {
 
   const postsContent = posts.reduce((acc, post) => `
     ${acc}
-    <li>
+    <li class="d-flex justify-content-between align-items-start py-1">
       <a href=${post.link}>${post.titles}</a>
+      <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">
+      Просмотр
+    </button>
     </li>`, '');
-
   postsList.innerHTML = postsContent;
+  const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
+  buttons.forEach((button) => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      const postId = Number(e.target.dataset.id);
+      const data = posts.filter(({ id }) => id === postId);
+    });
+  });
 };
 
 const renderErrors = (elements, value, prevValue) => {

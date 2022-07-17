@@ -14,7 +14,7 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
-const checkUpdates = (state, i18nInstance, period = 5000) => {
+const checkUpdates = (state, period = 5000) => {
   let data = state.feedsData;
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
@@ -25,7 +25,7 @@ const checkUpdates = (state, i18nInstance, period = 5000) => {
 
   Promise.all(promises).then(() => {
     state.feedsData = data;
-    setTimeout(() => checkUpdates(state, i18nInstance), period);
+    setTimeout(() => checkUpdates(state), period);
   });
 };
 
@@ -59,7 +59,6 @@ export default () => {
     {
       valid: true,
       processState: 'filling',
-      checking: false,
       url: '',
       errors: {},
       links: [],
@@ -67,8 +66,9 @@ export default () => {
         feeds: [],
         posts: [],
       },
+      uiState: [],
     },
-    view(elements, i18nInstance),
+    view(elements),
   );
 
   const validate = (currentUrl, urls) => {
@@ -99,10 +99,6 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
-                if (!state.checking) {
-                  setTimeout(() => checkUpdates(state, i18nInstance), 5000);
-                  state.checking = true;
-                }
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
@@ -118,4 +114,6 @@ export default () => {
         return null;
       });
   });
+
+  setTimeout(() => checkUpdates(state), 5000);
 };
