@@ -14,7 +14,18 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
-const checkUpdates = (state, i18nInstance, period = 5000) => {
+const setListeners = (state) => {
+  const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
+  buttons.forEach((button) => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      const postId = Number(e.target.dataset.id);
+      state.uiState.readedPosts.unshift(postId);
+    });
+  });
+};
+
+const checkUpdates = (state, period = 5000) => {
   let data = state.feedsData;
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
@@ -25,7 +36,8 @@ const checkUpdates = (state, i18nInstance, period = 5000) => {
 
   Promise.all(promises).then(() => {
     state.feedsData = data;
-    setTimeout(() => checkUpdates(state, i18nInstance), period);
+    setListeners(state);
+    setTimeout(() => checkUpdates(state), period);
   });
 };
 
@@ -59,7 +71,6 @@ export default () => {
     {
       valid: true,
       processState: 'filling',
-      checking: false,
       url: '',
       errors: {},
       links: [],
@@ -67,8 +78,11 @@ export default () => {
         feeds: [],
         posts: [],
       },
+      uiState: {
+        readedPosts: [],
+      },
     },
-    view(elements, i18nInstance),
+    (path, value, prevValue) => view(state, elements, path, value, prevValue),
   );
 
   const validate = (currentUrl, urls) => {
@@ -99,10 +113,7 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
-                if (!state.checking) {
-                  setTimeout(() => checkUpdates(state, i18nInstance), 5000);
-                  state.checking = true;
-                }
+                setListeners(state);
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }
@@ -118,4 +129,6 @@ export default () => {
         return null;
       });
   });
+
+  setTimeout(() => checkUpdates(state), 5000);
 };

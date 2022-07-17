@@ -67,7 +67,7 @@ export default (document, data) => {
   let currentLink = itemLinks.iterateNext();
 
   const newPosts = [];
-  for (let ids = setId(posts); currentTitle && currentDescription && currentLink; ids += 1) {
+  for (let id = setId(posts); currentTitle && currentDescription && currentLink; id += 1) { // eslint-disable-line
     const titles = currentTitle.textContent;
     const descriptions = currentDescription.textContent;
     const link = currentLink.textContent;
@@ -75,7 +75,7 @@ export default (document, data) => {
       newPosts.push({
         titles,
         descriptions,
-        ids,
+        id,
         feedId: id,
         link,
       });
