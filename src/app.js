@@ -14,6 +14,29 @@ import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
+const setListeners = (state) => {
+  const { posts } = state.feedsData;
+  const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
+  buttons.forEach((button) => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      const postId = Number(e.target.dataset.id);
+      const data = [];
+      // console.log('setListeners>>>', data);
+      const arr = posts.map((post) => {
+        if (post.id === postId) {
+          const newPost = { ...post, readed: 'true' };
+          data.push(newPost);
+          return newPost;
+        }
+        return post;
+      });
+      state.uiState.readedPosts.unshift(...data);
+      state.feedsData.posts = arr;
+    });
+  });
+};
+
 const checkUpdates = (state, period = 5000) => {
   let data = state.feedsData;
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
@@ -25,6 +48,7 @@ const checkUpdates = (state, period = 5000) => {
 
   Promise.all(promises).then(() => {
     state.feedsData = data;
+    setListeners(state);
     setTimeout(() => checkUpdates(state), period);
   });
 };
@@ -66,7 +90,9 @@ export default () => {
         feeds: [],
         posts: [],
       },
-      uiState: [],
+      uiState: {
+        readedPosts: [],
+      },
     },
     view(elements),
   );
@@ -99,6 +125,7 @@ export default () => {
               const document = parser(contents);
               if (isValidDocument(document)) {
                 state.feedsData = genFeeds(document, state.feedsData);
+                setListeners(state);
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
               }

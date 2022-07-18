@@ -29,20 +29,12 @@ const renderFeeds = (elements, value) => {
   const postsContent = posts.reduce((acc, post) => `
     ${acc}
     <li class="d-flex justify-content-between align-items-start py-1">
-      <a href=${post.link}>${post.titles}</a>
+      <a href=${post.link} class="${!!post.readed ? 'fw-normal' : 'fw-bold'}" target="_blank">${post.titles}</a>
       <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">
       Просмотр
     </button>
     </li>`, '');
   postsList.innerHTML = postsContent;
-  const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
-  buttons.forEach((button) => {
-    button.addEventListener('click', (e) => {
-      e.preventDefault();
-      const postId = Number(e.target.dataset.id);
-      const data = posts.filter(({ id }) => id === postId);
-    });
-  });
 };
 
 const renderErrors = (elements, value, prevValue) => {
@@ -74,6 +66,37 @@ const renderErrors = (elements, value, prevValue) => {
   elements.form.append(feedback);
 };
 
+const renderModal = (value) => {
+  const { titles, descriptions, link } = value[0];
+  const modal = document.getElementById('modal');
+  const title = modal.querySelector('.modal-title');
+  const body = modal.querySelector('.modal-body');
+  const linkButton = modal.querySelector('.full-article');
+  const linkEl = document.querySelector(`a[href="${link}"]`);
+  linkEl.classList.remove('fw-bold');
+  linkEl.classList.add('fw-normal');
+  modal.removeAttribute('aria-hidden');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('style', 'display: block');
+  modal.classList.add('show');
+  title.textContent = titles;
+  body.textContent = descriptions;
+  linkButton.setAttribute('href', link);
+
+  const closeButtons = modal.querySelectorAll('button[data-bs-dismiss="modal"]');
+  closeButtons.forEach((closeBtn) => {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      modal.setAttribute('aria-hidden', 'true');
+      modal.removeAttribute('aria-modal');
+      modal.removeAttribute('role');
+      modal.setAttribute('style', 'display: none');
+      modal.classList.remove('show');
+    });
+  });
+};
+
 export default (elements) => (path, value, prevValue) => {
   if (path === 'errors') {
     renderErrors(elements, value, prevValue);
@@ -88,5 +111,8 @@ export default (elements) => (path, value, prevValue) => {
     if (value === 'filling') {
       elements.submit.disabled = false;
     }
+  }
+  if (path === 'uiState.readedPosts') {
+    renderModal(value);
   }
 };
