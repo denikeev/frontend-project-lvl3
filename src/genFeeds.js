@@ -67,7 +67,7 @@ export default (document, data) => {
   let currentLink = itemLinks.iterateNext();
 
   const newPosts = [];
-  for (let id = setId(posts); currentTitle && currentDescription && currentLink; id += 1) {
+  for (let id = setId(posts); currentTitle && currentDescription && currentLink; id += 1) { // eslint-disable-line
     const titles = currentTitle.textContent;
     const descriptions = currentDescription.textContent;
     const link = currentLink.textContent;
@@ -87,6 +87,6 @@ export default (document, data) => {
   if (newPosts.length !== 0) {
     posts.unshift(...newPosts);
   }
-  console.log({ feeds, posts });
+
   return { feeds, posts };
 };

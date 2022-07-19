@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-const renderFeeds = (elements, value) => {
+const renderFeeds = (elements, value, state) => {
   const { feeds, posts } = value;
   const { feeds: feedsContainer, posts: postsContainer } = elements;
 
@@ -26,14 +26,17 @@ const renderFeeds = (elements, value) => {
 
   feedsList.innerHTML = feedsContent;
 
-  const postsContent = posts.reduce((acc, post) => `
+  const postsContent = posts.reduce((acc, post) => {
+    const isReaded = () => state.uiState.readedPosts.includes(post.id);
+    return `
     ${acc}
     <li class="d-flex justify-content-between align-items-start py-1">
-      <a href=${post.link} class="${!!post.readed ? 'fw-normal' : 'fw-bold'}" target="_blank">${post.titles}</a>
+      <a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" target="_blank">${post.titles}</a>
       <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">
       Просмотр
     </button>
-    </li>`, '');
+    </li>`;
+  }, '');
   postsList.innerHTML = postsContent;
 };
 
@@ -67,8 +70,9 @@ const renderErrors = (elements, value, prevValue) => {
 };
 
 const renderModal = (value, state) => {
-  console.log('datas>>>', state.feedsData.posts);
-  const { titles, descriptions, link } = value[0];
+  const [id] = value;
+  const [data] = state.feedsData.posts.filter((post) => post.id === id);
+  const { titles, descriptions, link } = data;
   const modal = document.getElementById('modal');
   const title = modal.querySelector('.modal-title');
   const body = modal.querySelector('.modal-body');
@@ -103,7 +107,7 @@ export default (state, elements, path, value, prevValue) => {
     renderErrors(elements, value, prevValue);
   }
   if (path === 'feedsData') {
-    renderFeeds(elements, value, prevValue);
+    renderFeeds(elements, value, state);
   }
   if (path === 'processState') {
     if (value === 'sending') {
@@ -114,7 +118,6 @@ export default (state, elements, path, value, prevValue) => {
     }
   }
   if (path === 'uiState.readedPosts') {
-    console.log(state);
     renderModal(value, state);
   }
 };

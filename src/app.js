@@ -15,24 +15,12 @@ import parser, { isValidDocument } from './parser.js';
 import genFeeds from './genFeeds.js';
 
 const setListeners = (state) => {
-  const { posts } = state.feedsData;
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
   buttons.forEach((button) => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
       const postId = Number(e.target.dataset.id);
-      const data = [];
-      // console.log('setListeners>>>', data);
-      const arr = posts.map((post) => {
-        if (post.id === postId) {
-          const newPost = { ...post, readed: 'true' };
-          data.push(newPost);
-          return newPost;
-        }
-        return post;
-      });
-      state.uiState.readedPosts.unshift(...data);
-      state.feedsData.posts = arr;
+      state.uiState.readedPosts.unshift(postId);
     });
   });
 };
