@@ -94,7 +94,7 @@ export default () => {
         readedPosts: [],
       },
     },
-    view(elements),
+    (path, value, prevValue) => view(state, elements, path, value, prevValue),
   );
 
   const validate = (currentUrl, urls) => {

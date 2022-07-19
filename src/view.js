@@ -66,7 +66,8 @@ const renderErrors = (elements, value, prevValue) => {
   elements.form.append(feedback);
 };
 
-const renderModal = (value) => {
+const renderModal = (value, state) => {
+  console.log('datas>>>', state.feedsData.posts);
   const { titles, descriptions, link } = value[0];
   const modal = document.getElementById('modal');
   const title = modal.querySelector('.modal-title');
@@ -97,7 +98,7 @@ const renderModal = (value) => {
   });
 };
 
-export default (elements) => (path, value, prevValue) => {
+export default (state, elements, path, value, prevValue) => {
   if (path === 'errors') {
     renderErrors(elements, value, prevValue);
   }
@@ -113,6 +114,7 @@ export default (elements) => (path, value, prevValue) => {
     }
   }
   if (path === 'uiState.readedPosts') {
-    renderModal(value);
+    console.log(state);
+    renderModal(value, state);
   }
 };
