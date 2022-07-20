@@ -6,7 +6,7 @@ import axios from 'axios';
 import view from './view.js';
 import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
-import genContent from './genContent.js';
+import genFeedList from './genFeedList.js';
 
 const setListeners = (state) => {
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
@@ -40,7 +40,7 @@ const checkUpdates = (state, period = 5000) => {
     .then((response) => {
       const { contents } = response.data;
       const document = parser(contents);
-      data = genContent(document, data);
+      data = genFeedList(document, data);
     }));
 
   Promise.all(promises).then(() => {
@@ -114,32 +114,31 @@ export default () => {
     validate(state.url, state.links)
       .then((data) => {
         state.valid = isEmpty(data);
-        state.errors = data;
-      })
-      .then(() => {
         if (state.valid) {
           state.processState = 'sending';
-          state.links.push(state.url);
-          axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`)
-            .then((response) => {
-              const { contents } = response.data;
-              const document = parser(contents);
-              if (isValidDocument(document)) {
-                state.feedsData = genContent(document, state.feedsData);
-                setListeners(state);
-              } else {
-                state.errors = i18nInstance.t('errors.parsing.err');
-              }
-              state.processState = 'filling';
-            })
-            .catch((error) => {
-              if (error.response) {
-                state.errors = i18nInstance.t('errors.network.err');
-              }
-              state.processState = 'filling';
-            });
+          return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`);
         }
+        state.errors = data;
         return null;
+      })
+      .then((response) => {
+        const { contents } = response.data;
+        const document = parser(contents);
+        if (isValidDocument(document)) {
+          state.feedsData = genFeedList(document, state.feedsData);
+          state.errors = {};
+          state.links.push(state.url);
+          setListeners(state);
+        } else {
+          state.errors = i18nInstance.t('errors.parsing.err');
+        }
+        state.processState = 'filling';
+      })
+      .catch((error) => {
+        if (error.response) {
+          state.errors = i18nInstance.t('errors.network.err');
+        }
+        state.processState = 'filling';
       });
   });
 

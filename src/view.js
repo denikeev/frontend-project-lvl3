@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 
 const renderFeeds = (elements, state, i18nInstance) => {
   const { feeds, posts } = state.feedsData;
-  const { feeds: feedsContainer, posts: postsContainer, feedback } = elements;
+  const { feeds: feedsContainer, posts: postsContainer } = elements;
 
   feedsContainer.innerHTML = '';
   postsContainer.innerHTML = '';
@@ -14,8 +14,8 @@ const renderFeeds = (elements, state, i18nInstance) => {
   const postsList = document.querySelector('.posts > ul');
   const feedsTitle = document.querySelector('.feeds > h2');
   const postsTitle = document.querySelector('.posts > h2');
-  feedsTitle.textContent = 'Фиды';
-  postsTitle.textContent = 'Посты';
+  feedsTitle.textContent = i18nInstance.t('feeds.name');
+  postsTitle.textContent = i18nInstance.t('posts.name');
 
   const feedsContent = feeds.reduce((acc, feed) => `
     ${acc}
@@ -31,9 +31,6 @@ const renderFeeds = (elements, state, i18nInstance) => {
     return `${acc}<li class="d-flex justify-content-between align-items-start py-1"><a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" data-id="${post.id}" target="_blank">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">${i18nInstance.t('posts.buttonText')}</button></li>`;
   }, '');
   postsList.innerHTML = postsContent;
-  feedback.textContent = i18nInstance.t('status.success');
-  feedback.classList.remove('text-danger');
-  feedback.classList.add('text-success');
 };
 
 const renderErrors = (elements, value, prevValue, i18nInstance) => {
