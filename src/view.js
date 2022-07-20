@@ -1,8 +1,8 @@
 import { isEmpty } from 'lodash';
 
-const renderFeeds = (elements, value, state) => {
-  const { feeds, posts } = value;
-  const { feeds: feedsContainer, posts: postsContainer } = elements;
+const renderFeeds = (elements, state, i18nInstance) => {
+  const { feeds, posts } = state.feedsData;
+  const { feeds: feedsContainer, posts: postsContainer, feedback } = elements;
 
   feedsContainer.innerHTML = '';
   postsContainer.innerHTML = '';
@@ -28,19 +28,16 @@ const renderFeeds = (elements, value, state) => {
 
   const postsContent = posts.reduce((acc, post) => {
     const isReaded = () => state.uiState.readedPosts.includes(post.id);
-    return `
-    ${acc}
-    <li class="d-flex justify-content-between align-items-start py-1">
-      <a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" target="_blank">${post.titles}</a>
-      <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">
-      Просмотр
-    </button>
-    </li>`;
+    return `${acc}<li class="d-flex justify-content-between align-items-start py-1"><a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" data-id="${post.id}" target="_blank">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">${i18nInstance.t('posts.buttonText')}</button></li>`;
   }, '');
   postsList.innerHTML = postsContent;
+  feedback.textContent = i18nInstance.t('status.success');
+  feedback.classList.remove('text-danger');
+  feedback.classList.add('text-success');
 };
 
-const renderErrors = (elements, value, prevValue) => {
+const renderErrors = (elements, value, prevValue, i18nInstance) => {
+  const { feedback } = elements;
   const fieldHadError = !isEmpty(prevValue);
   const fieldHasError = !isEmpty(value);
   if (!fieldHadError && !fieldHasError) {
@@ -50,64 +47,71 @@ const renderErrors = (elements, value, prevValue) => {
   }
   if (fieldHadError && !fieldHasError) {
     elements.url.classList.remove('is-invalid');
-    const feedback = document.querySelector('.feedback');
-    feedback.remove();
+    feedback.classList.remove('text-danger');
+    feedback.classList.add('text-success');
+    feedback.textContent = i18nInstance.t('status.success');
     elements.form.reset();
     elements.url.focus();
     return;
   }
   if (fieldHadError && fieldHasError) {
-    const feedback = document.querySelector('.feedback');
     feedback.textContent = value;
     return;
   }
 
   elements.url.classList.add('is-invalid');
-  const feedback = document.createElement('p');
-  feedback.classList.add('feedback', 'm-0', 'small', 'text-danger');
+  feedback.classList.remove('text-success');
+  feedback.classList.add('text-danger');
   feedback.textContent = value;
   elements.form.append(feedback);
 };
 
 const renderModal = (value, state) => {
-  const [id] = value;
-  const [data] = state.feedsData.posts.filter((post) => post.id === id);
-  const { titles, descriptions, link } = data;
-  const modal = document.getElementById('modal');
-  const title = modal.querySelector('.modal-title');
-  const body = modal.querySelector('.modal-body');
-  const linkButton = modal.querySelector('.full-article');
+  const [openedPostId] = state.uiState.readedPosts;
+  const [post] = state.feedsData.posts.filter(({ id }) => id === openedPostId);
+  const { title, description, link } = post;
   const linkEl = document.querySelector(`a[href="${link}"]`);
-  linkEl.classList.remove('fw-bold');
-  linkEl.classList.add('fw-normal');
-  modal.removeAttribute('aria-hidden');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('style', 'display: block');
-  modal.classList.add('show');
-  title.textContent = titles;
-  body.textContent = descriptions;
-  linkButton.setAttribute('href', link);
-
-  const closeButtons = modal.querySelectorAll('button[data-bs-dismiss="modal"]');
-  closeButtons.forEach((closeBtn) => {
-    closeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      modal.setAttribute('aria-hidden', 'true');
-      modal.removeAttribute('aria-modal');
-      modal.removeAttribute('role');
-      modal.setAttribute('style', 'display: none');
-      modal.classList.remove('show');
-    });
-  });
+  const modalEl = document.getElementById('modal');
+  const bodyEl = document.body;
+  if (value === 'opened') {
+    bodyEl.classList.add('modal-open');
+    bodyEl.setAttribute('style', 'overflow: hidden; padding-right: 17px;');
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.classList.add('modal-backdrop', 'fade', 'show');
+    bodyEl.append(modalBackdrop);
+    const titleEl = modalEl.querySelector('.modal-title');
+    const descriptionEl = modalEl.querySelector('.modal-body');
+    const linkButtonEl = modalEl.querySelector('.full-article');
+    linkEl.classList.remove('fw-bold');
+    linkEl.classList.add('fw-normal');
+    modalEl.removeAttribute('aria-hidden');
+    modalEl.setAttribute('aria-modal', 'true');
+    modalEl.setAttribute('role', 'dialog');
+    modalEl.setAttribute('style', 'display: block');
+    modalEl.classList.add('show');
+    titleEl.textContent = title;
+    descriptionEl.textContent = description;
+    linkButtonEl.setAttribute('href', link);
+  }
+  if (value === 'closed') {
+    const modalBackdrop = bodyEl.querySelector('.modal-backdrop');
+    modalBackdrop.remove();
+    bodyEl.classList.remove('modal-open');
+    bodyEl.removeAttribute('style');
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.removeAttribute('aria-modal');
+    modalEl.removeAttribute('role');
+    modalEl.setAttribute('style', 'display: none');
+    modalEl.classList.remove('show');
+  }
 };
 
-export default (state, elements, path, value, prevValue) => {
+export default (state, elements, i18nInstance, path, value, prevValue) => {
   if (path === 'errors') {
-    renderErrors(elements, value, prevValue);
+    renderErrors(elements, value, prevValue, i18nInstance);
   }
   if (path === 'feedsData') {
-    renderFeeds(elements, value, state);
+    renderFeeds(elements, state, i18nInstance);
   }
   if (path === 'processState') {
     if (value === 'sending') {
@@ -117,7 +121,15 @@ export default (state, elements, path, value, prevValue) => {
       elements.submit.disabled = false;
     }
   }
-  if (path === 'uiState.readedPosts') {
+  if (path === 'uiState.modal') {
     renderModal(value, state);
+  }
+  if (path === 'uiState.readedPosts') {
+    const [lastReadedId] = state.uiState.readedPosts;
+    const [post] = state.feedsData.posts.filter(({ id }) => id === lastReadedId);
+    const { link } = post;
+    const linkEl = document.querySelector(`a[href="${link}"]`);
+    linkEl.classList.remove('fw-bold');
+    linkEl.classList.add('fw-normal');
   }
 };

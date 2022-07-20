@@ -1,24 +1,33 @@
 import i18n from 'i18next';
 import onChange from 'on-change';
-import {
-  string,
-  url, // eslint-disable-line
-  required, // eslint-disable-line
-  notOneOf, // eslint-disable-line
-  setLocale, // eslint-disable-line
-} from 'yup';
+import * as yup from 'yup';
 import { isEmpty } from 'lodash';
 import axios from 'axios';
 import view from './view.js';
 import resources from './locales/ru.js';
 import parser, { isValidDocument } from './parser.js';
-import genFeeds from './genFeeds.js';
+import genContent from './genContent.js';
 
 const setListeners = (state) => {
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
+  const links = document.querySelectorAll('a[data-id]');
+  const closeButtons = document.querySelectorAll('button[data-bs-dismiss="modal"]');
   buttons.forEach((button) => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
+      const postId = Number(e.target.dataset.id);
+      state.uiState.readedPosts.unshift(postId);
+      state.uiState.modal = 'opened';
+    });
+  });
+  closeButtons.forEach((closeBtn) => {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      state.uiState.modal = 'closed';
+    });
+  });
+  links.forEach((link) => {
+    link.addEventListener('click', (e) => {
       const postId = Number(e.target.dataset.id);
       state.uiState.readedPosts.unshift(postId);
     });
@@ -31,7 +40,7 @@ const checkUpdates = (state, period = 5000) => {
     .then((response) => {
       const { contents } = response.data;
       const document = parser(contents);
-      data = genFeeds(document, data);
+      data = genContent(document, data);
     }));
 
   Promise.all(promises).then(() => {
@@ -43,21 +52,23 @@ const checkUpdates = (state, period = 5000) => {
 
 export default () => {
   const i18nInstance = i18n.createInstance();
+  const defaultLanguage = 'ru';
   i18nInstance.init({
-    lng: 'ru',
+    lng: defaultLanguage,
     resources,
   });
 
-  setLocale({
+  yup.setLocale({
     mixed: {
       notOneOf: () => ({ key: 'errors.validation.notOneOf' }),
+      required: () => ({ key: 'errors.validation.required' }),
     },
     string: {
       url: () => ({ key: 'errors.validation.url' }),
     },
   });
 
-  const baseSchema = string().url().required();
+  const baseSchema = yup.string().url().required();
 
   const elements = {
     form: document.getElementById('rss-form'),
@@ -65,6 +76,7 @@ export default () => {
     submit: document.querySelector('button[type="submit"]'),
     feeds: document.querySelector('.feeds'),
     posts: document.querySelector('.posts'),
+    feedback: document.querySelector('.feedback'),
   };
 
   const state = onChange(
@@ -80,9 +92,10 @@ export default () => {
       },
       uiState: {
         readedPosts: [],
+        modal: 'closed',
       },
     },
-    (path, value, prevValue) => view(state, elements, path, value, prevValue),
+    (path, value, prevValue) => view(state, elements, i18nInstance, path, value, prevValue),
   );
 
   const validate = (currentUrl, urls) => {
@@ -112,7 +125,7 @@ export default () => {
               const { contents } = response.data;
               const document = parser(contents);
               if (isValidDocument(document)) {
-                state.feedsData = genFeeds(document, state.feedsData);
+                state.feedsData = genContent(document, state.feedsData);
                 setListeners(state);
               } else {
                 state.errors = i18nInstance.t('errors.parsing.err');
