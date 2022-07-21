@@ -116,12 +116,13 @@ export default () => {
         state.valid = isEmpty(data);
         if (state.valid) {
           state.processState = 'sending';
-          return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`);
+          return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
         }
         state.errors = data;
         return null;
       })
       .then((response) => {
+        console.log('Response', response);
         const { contents } = response.data;
         const document = parser(contents);
         if (isValidDocument(document)) {
@@ -137,6 +138,9 @@ export default () => {
       .catch((error) => {
         if (error.response) {
           state.errors = i18nInstance.t('errors.network.err');
+        }
+        if (error.code === 'ECONNABORTED') {
+          state.errors = i18nInstance.t('errors.network.aborted');
         }
         state.processState = 'filling';
       });

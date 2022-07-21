@@ -113,9 +113,11 @@ export default (state, elements, i18nInstance, path, value, prevValue) => {
   if (path === 'processState') {
     if (value === 'sending') {
       elements.submit.disabled = true;
+      elements.url.setAttribute('readonly', 'true');
     }
     if (value === 'filling') {
       elements.submit.disabled = false;
+      elements.url.removeAttribute('readonly');
     }
   }
   if (path === 'uiState.modal') {

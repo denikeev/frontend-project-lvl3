@@ -9,6 +9,7 @@ export default {
         },
         network: {
           err: 'Ошибка сети',
+          aborted: 'Ошибка сети',
         },
         parsing: {
           err: 'Ресурс не содержит валидный RSS',
