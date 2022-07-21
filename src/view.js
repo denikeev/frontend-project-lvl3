@@ -38,6 +38,9 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   const fieldHadError = !isEmpty(prevValue);
   const fieldHasError = !isEmpty(value);
   if (!fieldHadError && !fieldHasError) {
+    feedback.classList.remove('text-danger');
+    feedback.classList.add('text-success');
+    feedback.textContent = i18nInstance.t('status.success');
     elements.form.reset();
     elements.url.focus();
     return;
