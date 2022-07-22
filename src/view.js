@@ -28,7 +28,7 @@ const renderFeeds = (elements, state, i18nInstance) => {
 
   const postsContent = posts.reduce((acc, post) => {
     const isReaded = () => state.uiState.readedPosts.includes(post.id);
-    return `${acc}<li class="d-flex list-group-item justify-content-between align-items-start border-0 p-0 mt-2"><a href=${post.link} class="me-2 ${isReaded() ? 'fw-normal' : 'fw-bold'} text-decoration-none" data-id="${post.id}" target="_blank">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">${i18nInstance.t('posts.buttonText')}</button></li>`;
+    return `${acc}<li class="d-flex list-group-item justify-content-between align-items-start border-0 p-0 mt-2"><a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" data-id="${post.id}" target="_blank">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">${i18nInstance.t('posts.buttonText')}</button></li>`;
   }, '');
   postsList.innerHTML = postsContent;
 };
