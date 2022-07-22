@@ -137,7 +137,7 @@ export default (state, elements, i18nInstance, path, value, prevValue) => {
       break;
     }
     default:
-      return null;
+      break;
   }
   return null;
 };

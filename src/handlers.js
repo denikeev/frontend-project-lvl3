@@ -45,7 +45,7 @@ const checkNewPosts = (state, period = 5000) => {
   });
 };
 
-const processLink = (e, state, validate, i18nInstance) => {
+const viewFeed = (e, state, validate, i18nInstance) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   state.url = formData.get('url');
@@ -60,9 +60,8 @@ const processLink = (e, state, validate, i18nInstance) => {
       state.errors = data;
       return null;
     })
-    .then((response) => {
-      const { contents } = response.data;
-      const document = parser(contents);
+    .then(({ data }) => {
+      const document = parser(data.contents);
       if (isValidDocument(document)) {
         state.feedsData = genFeedList(document, state.feedsData);
         state.errors = {};
@@ -84,4 +83,4 @@ const processLink = (e, state, validate, i18nInstance) => {
     });
 };
 
-export { processLink, checkNewPosts };
+export { viewFeed, checkNewPosts };

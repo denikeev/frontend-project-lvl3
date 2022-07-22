@@ -3,7 +3,7 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import view from './view.js';
 import resources from './locales/ru.js';
-import { processLink, checkNewPosts } from './handlers.js';
+import { viewFeed, checkNewPosts } from './handlers.js';
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -62,7 +62,7 @@ export default () => {
       .catch((e) => i18nInstance.t(e.message.key));
   };
 
-  elements.form.addEventListener('submit', (e) => processLink(e, state, validate, i18nInstance));
+  elements.form.addEventListener('submit', (e) => viewFeed(e, state, validate, i18nInstance));
 
   setTimeout(() => checkNewPosts(state), 5000);
 };
