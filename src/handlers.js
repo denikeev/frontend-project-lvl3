@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash';
 import axios from 'axios';
-import parser, { isValidDocument } from './parser.js';
-import genFeedList from './genFeedList.js';
+import parser from './parser.js';
+// import genFeedList from './genFeedList.js';
+import setId from './setId.js';
 
 const setListeners = (state) => {
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
@@ -10,7 +11,7 @@ const setListeners = (state) => {
   buttons.forEach((button) => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
-      const postId = Number(e.target.dataset.id);
+      const postId = e.target.dataset.id;
       state.uiState.readedPosts.unshift(postId);
       state.uiState.modal = 'opened';
     });
@@ -23,7 +24,7 @@ const setListeners = (state) => {
   });
   links.forEach((link) => {
     link.addEventListener('click', (e) => {
-      const postId = Number(e.target.dataset.id);
+      const postId = e.target.dataset.id;
       state.uiState.readedPosts.unshift(postId);
     });
   });
@@ -34,8 +35,8 @@ const checkNewPosts = (state, period = 5000) => {
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
       const { contents } = response.data;
-      const document = parser(contents);
-      data = genFeedList(document, data);
+      const normalizedData = parser(contents, data);
+      data = setId(normalizedData);
     }));
 
   Promise.all(promises).then(() => {
@@ -61,13 +62,13 @@ const addFeed = (e, state, validate, i18nInstance) => {
       throw new Error('yup validation error');
     })
     .then(({ data }) => {
-      const document = parser(data.contents);
-      if (isValidDocument(document)) {
-        state.feedsData = genFeedList(document, state.feedsData);
+      try {
+        const normalizedData = parser(data.contents, state.feedsData);
+        state.feedsData = setId(normalizedData);
         state.errors = {};
         state.links.push(state.url);
         setListeners(state);
-      } else {
+      } catch {
         state.errors = i18nInstance.t('errors.parsing.err');
       }
       state.processState = 'filling';

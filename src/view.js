@@ -55,6 +55,7 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
     return;
   }
   if (fieldHadError && fieldHasError) {
+    // console.log(value);
     feedback.textContent = value;
     return;
   }
@@ -62,6 +63,7 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   elements.url.classList.add('is-invalid');
   feedback.classList.remove('text-success');
   feedback.classList.add('text-danger');
+  // console.log(value);
   feedback.textContent = value;
 };
 
@@ -129,9 +131,13 @@ export default (state, elements, i18nInstance, path, value, prevValue) => {
       break;
     case 'uiState.readedPosts': {
       const [lastReadedId] = state.uiState.readedPosts;
+      // console.log(lastReadedId);
+      // console.log('stateFeedsdataPosts>>>', state.feedsData.posts);
       const [post] = state.feedsData.posts.filter(({ id }) => id === lastReadedId);
+      // console.log('post>>>', post);
       const { link } = post;
       const linkEl = document.querySelector(`a[href="${link}"]`);
+      // console.log('linkEl>>>', linkEl);
       linkEl.classList.remove('fw-bold');
       linkEl.classList.add('fw-normal');
       break;
