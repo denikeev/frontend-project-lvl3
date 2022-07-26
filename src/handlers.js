@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash';
 import axios from 'axios';
-import parser, { isValidDocument } from './parser.js';
-import genFeedList from './genFeedList.js';
+import parser from './parser.js';
+import normalizeData from './normalizeData.js';
 
 const setListeners = (state) => {
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
@@ -10,7 +10,7 @@ const setListeners = (state) => {
   buttons.forEach((button) => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
-      const postId = Number(e.target.dataset.id);
+      const postId = e.target.dataset.id;
       state.uiState.readedPosts.unshift(postId);
       state.uiState.modal = 'opened';
     });
@@ -23,7 +23,7 @@ const setListeners = (state) => {
   });
   links.forEach((link) => {
     link.addEventListener('click', (e) => {
-      const postId = Number(e.target.dataset.id);
+      const postId = e.target.dataset.id;
       state.uiState.readedPosts.unshift(postId);
     });
   });
@@ -34,8 +34,8 @@ const checkNewPosts = (state, period = 5000) => {
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
       const { contents } = response.data;
-      const document = parser(contents);
-      data = genFeedList(document, data);
+      const normalizedData = parser(contents, data);
+      data = normalizeData(normalizedData);
     }));
 
   Promise.all(promises).then(() => {
@@ -45,7 +45,7 @@ const checkNewPosts = (state, period = 5000) => {
   });
 };
 
-const viewFeed = (e, state, validate, i18nInstance) => {
+const addFeed = (e, state, validate) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   state.url = formData.get('url');
@@ -57,30 +57,30 @@ const viewFeed = (e, state, validate, i18nInstance) => {
         state.processState = 'sending';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
       }
-      state.errors = data;
-      return null;
+      state.error = data;
+      throw new Error('yup validation error');
     })
     .then(({ data }) => {
-      const document = parser(data.contents);
-      if (isValidDocument(document)) {
-        state.feedsData = genFeedList(document, state.feedsData);
-        state.errors = {};
+      try {
+        const normalizedData = parser(data.contents, state.feedsData);
+        state.feedsData = normalizeData(normalizedData);
+        state.error = '';
         state.links.push(state.url);
         setListeners(state);
-      } else {
-        state.errors = i18nInstance.t('errors.parsing.err');
+      } catch {
+        state.error = 'parsingFailed';
       }
       state.processState = 'filling';
     })
     .catch((error) => {
       if (error.response) {
-        state.errors = i18nInstance.t('errors.network.err');
+        state.error = 'networkError';
       }
       if (error.code === 'ECONNABORTED') {
-        state.errors = i18nInstance.t('errors.network.aborted');
+        state.error = 'networkAborted';
       }
       state.processState = 'filling';
     });
 };
 
-export { viewFeed, checkNewPosts };
+export { addFeed, checkNewPosts };

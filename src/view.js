@@ -1,42 +1,69 @@
 import { isEmpty } from 'lodash';
 
-const renderFeeds = (elements, state, i18nInstance) => {
-  const { feeds, posts } = state.feedsData;
-  const { feeds: feedsContainer, posts: postsContainer } = elements;
-
+const renderFeeds = (feeds, feedsContainer, i18nInstance) => {
   feedsContainer.innerHTML = '';
-  postsContainer.innerHTML = '';
-
   const innerMarkup = '<h2 class="h4 text-decoration-underline"></h2><ul class="list-group border-0"></ul>';
   feedsContainer.innerHTML = innerMarkup;
-  postsContainer.innerHTML = innerMarkup;
   const feedsList = document.querySelector('.feeds > ul');
-  const postsList = document.querySelector('.posts > ul');
   const feedsTitle = document.querySelector('.feeds > h2');
-  const postsTitle = document.querySelector('.posts > h2');
   feedsTitle.textContent = i18nInstance.t('feeds.name');
+  const feedsHtml = feeds.map(() => "<li class='list-group-item p-0 mt-2 border-0'><h3 class='h5 mb-1'></h3><p class='small mb-0'></p></li>", '').join('').trim();
+  feedsList.innerHTML = feedsHtml;
+  const feedsItems = feedsList.querySelectorAll('.list-group-item');
+
+  feedsItems.forEach((item, index) => {
+    const title = item.querySelector('h3');
+    const description = item.querySelector('p');
+    title.textContent = feeds[index].title;
+    description.textContent = feeds[index].description;
+  });
+};
+
+const renderPosts = (posts, postsContainer, state, i18nInstance) => {
+  postsContainer.innerHTML = '';
+  const innerMarkup = '<h2 class="h4 text-decoration-underline"></h2><ul class="list-group border-0"></ul>';
+  postsContainer.innerHTML = innerMarkup;
+  const postsList = document.querySelector('.posts > ul');
+  const postsTitle = document.querySelector('.posts > h2');
   postsTitle.textContent = i18nInstance.t('posts.name');
+  const postsHtml = posts.map(() => "<li class='d-flex list-group-item justify-content-between align-items-start border-0 p-0 mt-2'><a class='' data-id='' target='_blank'></a><button type='button' class='btn btn-outline-primary btn-sm' data-bs-toggle='modal' data-bs-target='#modal' data-id=''></button></li>").join('').trim('');
+  postsList.innerHTML = postsHtml;
+  const postsItems = postsList.querySelectorAll('.list-group-item');
 
-  const feedsContent = feeds.reduce((acc, feed) => `
-    ${acc}
-    <li class="list-group-item p-0 mt-2 border-0">
-      <h3 class="h5 mb-1">${feed.title}</h3>
-      <p class="small mb-0">${feed.description}</p>
-    </li>`, '').trim();
+  postsItems.forEach((item, index) => {
+    const isReaded = () => state.uiState.readedPosts.includes(posts[index].id);
+    const url = item.querySelector('a');
+    url.setAttribute('href', posts[index].link);
+    url.setAttribute('data-id', posts[index].id);
+    url.classList.add(`${isReaded() ? 'fw-normal' : 'fw-bold'}`);
+    url.textContent = posts[index].title;
+    const button = item.querySelector('button');
+    button.setAttribute('data-id', posts[index].id);
+    button.textContent = i18nInstance.t('posts.buttonText');
+  });
+};
 
-  feedsList.innerHTML = feedsContent;
+const renderContent = (elements, state, i18nInstance) => {
+  const { feeds, posts } = state.feedsData;
+  const { feeds: feedsContainer, posts: postsContainer } = elements;
+  renderFeeds(feeds, feedsContainer, i18nInstance);
+  renderPosts(posts, postsContainer, state, i18nInstance);
+};
 
-  const postsContent = posts.reduce((acc, post) => {
-    const isReaded = () => state.uiState.readedPosts.includes(post.id);
-    return `${acc}<li class="d-flex list-group-item justify-content-between align-items-start border-0 p-0 mt-2"><a href=${post.link} class="${isReaded() ? 'fw-normal' : 'fw-bold'}" data-id="${post.id}" target="_blank">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal" data-id="${post.id}">${i18nInstance.t('posts.buttonText')}</button></li>`;
-  }, '');
-  postsList.innerHTML = postsContent;
+const errorKey = {
+  parsingFailed: 'errors.parsing.err',
+  networkError: 'errors.network.err',
+  networkAborted: 'errors.network.aborted',
+  notOneOf: 'errors.validation.notOneOf',
+  required: 'errors.validation.required',
+  url: 'errors.validation.url',
 };
 
 const renderErrors = (elements, value, prevValue, i18nInstance) => {
   const { feedback } = elements;
   const fieldHadError = !isEmpty(prevValue);
   const fieldHasError = !isEmpty(value);
+  const errorText = errorKey[value];
   if (!fieldHadError && !fieldHasError) {
     feedback.classList.remove('text-danger');
     feedback.classList.add('text-success');
@@ -55,14 +82,14 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
     return;
   }
   if (fieldHadError && fieldHasError) {
-    feedback.textContent = value;
+    feedback.textContent = i18nInstance.t(errorText);
     return;
   }
 
   elements.url.classList.add('is-invalid');
   feedback.classList.remove('text-success');
   feedback.classList.add('text-danger');
-  feedback.textContent = value;
+  feedback.textContent = i18nInstance.t(errorText);
 };
 
 const renderModal = (value, state) => {
@@ -107,12 +134,12 @@ const renderModal = (value, state) => {
 
 export default (state, elements, i18nInstance, path, value, prevValue) => {
   switch (path) {
-    case 'errors': {
+    case 'error': {
       renderErrors(elements, value, prevValue, i18nInstance);
       break;
     }
     case 'feedsData':
-      renderFeeds(elements, state, i18nInstance);
+      renderContent(elements, state, i18nInstance);
       break;
     case 'processState':
       if (value === 'sending') {

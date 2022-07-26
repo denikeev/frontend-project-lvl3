@@ -3,7 +3,7 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import view from './view.js';
 import resources from './locales/ru.js';
-import { viewFeed, checkNewPosts } from './handlers.js';
+import { addFeed, checkNewPosts } from './handlers.js';
 
 export default () => {
   const i18nInstance = i18n.createInstance();
@@ -16,11 +16,11 @@ export default () => {
 
   yup.setLocale({
     mixed: {
-      notOneOf: () => ({ key: 'errors.validation.notOneOf' }),
-      required: () => ({ key: 'errors.validation.required' }),
+      notOneOf: () => ({ key: 'notOneOf' }),
+      required: () => ({ key: 'required' }),
     },
     string: {
-      url: () => ({ key: 'errors.validation.url' }),
+      url: () => ({ key: 'url' }),
     },
   });
 
@@ -40,7 +40,7 @@ export default () => {
       valid: true,
       processState: 'filling',
       url: '',
-      errors: {},
+      error: null,
       links: [],
       feedsData: {
         feeds: [],
@@ -62,7 +62,7 @@ export default () => {
       .catch((e) => i18nInstance.t(e.message.key));
   };
 
-  elements.form.addEventListener('submit', (e) => viewFeed(e, state, validate, i18nInstance));
+  elements.form.addEventListener('submit', (e) => addFeed(e, state, validate, i18nInstance));
 
   setTimeout(() => checkNewPosts(state), 5000);
 };
