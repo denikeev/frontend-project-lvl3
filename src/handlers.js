@@ -45,7 +45,7 @@ const checkNewPosts = (state, period = 5000) => {
   });
 };
 
-const viewFeed = (e, state, validate, i18nInstance) => {
+const addFeed = (e, state, validate, i18nInstance) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   state.url = formData.get('url');
@@ -58,7 +58,7 @@ const viewFeed = (e, state, validate, i18nInstance) => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
       }
       state.errors = data;
-      return null;
+      throw new Error('yup validation error');
     })
     .then(({ data }) => {
       const document = parser(data.contents);
@@ -83,4 +83,4 @@ const viewFeed = (e, state, validate, i18nInstance) => {
     });
 };
 
-export { viewFeed, checkNewPosts };
+export { addFeed, checkNewPosts };
