@@ -1,8 +1,7 @@
 import { isEmpty } from 'lodash';
 import axios from 'axios';
 import parser from './parser.js';
-// import genFeedList from './genFeedList.js';
-import setId from './setId.js';
+import normalizeData from './normalizeData.js';
 
 const setListeners = (state) => {
   const buttons = document.querySelectorAll('button[data-bs-toggle="modal"]');
@@ -36,7 +35,7 @@ const checkNewPosts = (state, period = 5000) => {
     .then((response) => {
       const { contents } = response.data;
       const normalizedData = parser(contents, data);
-      data = setId(normalizedData);
+      data = normalizeData(normalizedData);
     }));
 
   Promise.all(promises).then(() => {
@@ -46,7 +45,7 @@ const checkNewPosts = (state, period = 5000) => {
   });
 };
 
-const addFeed = (e, state, validate, i18nInstance) => {
+const addFeed = (e, state, validate) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   state.url = formData.get('url');
@@ -58,27 +57,27 @@ const addFeed = (e, state, validate, i18nInstance) => {
         state.processState = 'sending';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
       }
-      state.errors = data;
+      state.error = data;
       throw new Error('yup validation error');
     })
     .then(({ data }) => {
       try {
         const normalizedData = parser(data.contents, state.feedsData);
-        state.feedsData = setId(normalizedData);
-        state.errors = {};
+        state.feedsData = normalizeData(normalizedData);
+        state.error = '';
         state.links.push(state.url);
         setListeners(state);
       } catch {
-        state.errors = 'parsingFiled';
+        state.error = 'parsingFailed';
       }
       state.processState = 'filling';
     })
     .catch((error) => {
       if (error.response) {
-        state.errors = 'networkError';
+        state.error = 'networkError';
       }
       if (error.code === 'ECONNABORTED') {
-        state.errors = 'networkAborted';
+        state.error = 'networkAborted';
       }
       state.processState = 'filling';
     });

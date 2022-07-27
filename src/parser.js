@@ -50,6 +50,5 @@ export default (data, state) => {
   const feedsData = genFeeds(document, feeds);
   const postsData = genPosts(document, posts);
   const content = { feeds: feedsData, posts: postsData };
-  console.log('parserContent>>>', content);
   return content;
 };
