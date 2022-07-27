@@ -69,16 +69,16 @@ const addFeed = (e, state, validate, i18nInstance) => {
         state.links.push(state.url);
         setListeners(state);
       } catch {
-        state.errors = i18nInstance.t('errors.parsing.err');
+        state.errors = 'parsingFiled';
       }
       state.processState = 'filling';
     })
     .catch((error) => {
       if (error.response) {
-        state.errors = i18nInstance.t('errors.network.err');
+        state.errors = 'networkError';
       }
       if (error.code === 'ECONNABORTED') {
-        state.errors = i18nInstance.t('errors.network.aborted');
+        state.errors = 'networkAborted';
       }
       state.processState = 'filling';
     });

@@ -16,11 +16,11 @@ export default () => {
 
   yup.setLocale({
     mixed: {
-      notOneOf: () => ({ key: 'errors.validation.notOneOf' }),
-      required: () => ({ key: 'errors.validation.required' }),
+      notOneOf: () => ({ key: 'notOneOf' }),
+      required: () => ({ key: 'required' }),
     },
     string: {
-      url: () => ({ key: 'errors.validation.url' }),
+      url: () => ({ key: 'url' }),
     },
   });
 

@@ -33,10 +33,20 @@ const renderFeeds = (elements, state, i18nInstance) => {
   postsList.innerHTML = postsContent;
 };
 
+const errorKey = {
+  parsingFiled: 'errors.parsing.err',
+  networkError: 'errors.network.err',
+  networkAborted: 'errors.network.aborted',
+  notOneOf: 'errors.validation.notOneOf',
+  required: 'errors.validation.required',
+  url: 'errors.validation.url',
+};
+
 const renderErrors = (elements, value, prevValue, i18nInstance) => {
   const { feedback } = elements;
   const fieldHadError = !isEmpty(prevValue);
   const fieldHasError = !isEmpty(value);
+  const errorText = errorKey[value];
   if (!fieldHadError && !fieldHasError) {
     feedback.classList.remove('text-danger');
     feedback.classList.add('text-success');
@@ -56,7 +66,8 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   }
   if (fieldHadError && fieldHasError) {
     // console.log(value);
-    feedback.textContent = value;
+    // feedback.textContent = value;
+    feedback.textContent = i18nInstance.t(errorText);
     return;
   }
 
@@ -64,7 +75,8 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   feedback.classList.remove('text-success');
   feedback.classList.add('text-danger');
   // console.log(value);
-  feedback.textContent = value;
+  // feedback.textContent = value;
+  feedback.textContent = i18nInstance.t(errorText);
 };
 
 const renderModal = (value, state) => {
