@@ -40,7 +40,7 @@ export default () => {
       valid: true,
       processState: 'filling',
       url: '',
-      error: '',
+      error: null,
       links: [],
       feedsData: {
         feeds: [],
