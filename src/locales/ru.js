@@ -14,6 +14,7 @@ export default {
         parsing: {
           err: 'Ресурс не содержит валидный RSS',
         },
+        unknown: 'Неизвестная ошибка. Что-то пошло не так.',
       },
       status: {
         success: 'RSS успешно загружен',
