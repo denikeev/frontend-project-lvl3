@@ -99,6 +99,10 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   feedback.textContent = i18nInstance.t(errorText);
 };
 
+const hasScrollExist = (bodyEl = document.body, windowEl = window) => (
+  windowEl.innerWidth > bodyEl.clientWidth
+);
+
 const openModal = (state, modalEl, bodyEl) => {
   const [openedPostId] = state.uiState.readedPosts;
   const post = state.feedsData.posts.find(({ id }) => id === openedPostId);
@@ -106,7 +110,7 @@ const openModal = (state, modalEl, bodyEl) => {
   const linkEl = document.querySelector(`a[href="${link}"]`);
 
   bodyEl.classList.add('modal-open');
-  bodyEl.setAttribute('style', 'overflow: hidden; padding-right: 17px;');
+  bodyEl.setAttribute('style', `overflow: hidden; ${hasScrollExist(bodyEl) ? 'padding-right: 17px;' : 'padding-right: 0;'}`);
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop', 'fade', 'show');
   bodyEl.append(modalBackdrop);

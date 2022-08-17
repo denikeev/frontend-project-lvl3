@@ -33,17 +33,14 @@ const setListeners = (state) => {
 };
 
 const checkNewPosts = (state, period = postsCheckInterval) => {
-  let data = state.feedsData;
   const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
       const { contents } = response.data;
-      const parsedDocument = parser(contents);
-      data = normalizeData(parsedDocument, data);
+      const parsedData = parser(contents);
+      state.feedsData = normalizeData(parsedData, state.feedsData);
     }));
 
   Promise.all(promises).then(() => {
-    state.feedsData = data;
-    setListeners(state);
     setTimeout(() => checkNewPosts(state), period);
   });
 };
@@ -137,12 +134,8 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
       })
       .then(({ data }) => {
-        const parsedDocument = parser(data.contents);
-        const errorNode = parsedDocument.querySelector('parsererror');
-        if (errorNode) {
-          throw new Error('parsingFailed');
-        }
-        state.feedsData = normalizeData(parsedDocument, state.feedsData);
+        const parsedData = parser(data.contents);
+        state.feedsData = normalizeData(parsedData, state.feedsData);
         state.error = '';
         state.links.push(state.url);
         setListeners(state);
@@ -153,5 +146,3 @@ export default () => {
 
   setTimeout(() => checkNewPosts(state), postsCheckInterval);
 };
-
-// почему-то при нажатии на просмотр, верстка дергается вправо-влево, посмотри пожалуйста
