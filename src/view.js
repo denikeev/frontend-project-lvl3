@@ -158,7 +158,7 @@ export default (state, elements, i18nInstance, path, value, prevValue) => {
       renderErrors(elements, value, prevValue, i18nInstance);
       break;
     }
-    case 'feedsData':
+    case 'feedsData': case 'feedsData.posts':
       renderContent(elements, state, i18nInstance);
       break;
     case 'processState':

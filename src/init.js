@@ -7,7 +7,7 @@ import axios from 'axios';
 import view from './view.js';
 import resources from './locales/ru.js';
 import parser from './parser.js';
-import normalizeData from './normalizeData.js';
+import { getNewFeed, getNewPosts } from './normalizeData.js';
 
 const postsCheckInterval = 5000;
 
@@ -37,7 +37,8 @@ const checkNewPosts = (state, period = postsCheckInterval) => {
     .then((response) => {
       const { contents } = response.data;
       const parsedData = parser(contents);
-      state.feedsData = normalizeData(parsedData, state.feedsData);
+      const newPosts = getNewPosts(parsedData.posts, state.feedsData.posts);
+      state.feedsData.posts = [...newPosts, ...state.feedsData.posts];
     }));
 
   Promise.all(promises).then(() => {
@@ -135,7 +136,12 @@ export default () => {
       })
       .then(({ data }) => {
         const parsedData = parser(data.contents);
-        state.feedsData = normalizeData(parsedData, state.feedsData);
+        const newFeed = getNewFeed(parsedData.feeds, state.feedsData.feeds);
+        const newPosts = getNewPosts(parsedData.posts, state.feedsData.posts);
+        state.feedsData = {
+          feeds: [...newFeed, ...state.feedsData.feeds],
+          posts: [...newPosts, ...state.feedsData.posts],
+        };
         state.error = '';
         state.links.push(state.url);
         setListeners(state);
