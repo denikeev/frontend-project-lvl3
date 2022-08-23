@@ -99,57 +99,19 @@ const renderErrors = (elements, value, prevValue, i18nInstance) => {
   feedback.textContent = i18nInstance.t(errorText);
 };
 
-const hasScrollExist = (bodyEl = document.body, windowEl = window) => (
-  windowEl.innerWidth > bodyEl.clientWidth
-);
-
-const openModal = (state, modalEl, bodyEl) => {
+const renderModalContent = (state, modalEl) => {
   const [openedPostId] = state.uiState.readedPosts;
   const post = state.feedsData.posts.find(({ id }) => id === openedPostId);
   const { title, description, link } = post;
   const linkEl = document.querySelector(`a[href="${link}"]`);
-
-  bodyEl.classList.add('modal-open');
-  bodyEl.setAttribute('style', `overflow: hidden; ${hasScrollExist(bodyEl) ? 'padding-right: 17px;' : 'padding-right: 0;'}`);
-  const modalBackdrop = document.createElement('div');
-  modalBackdrop.classList.add('modal-backdrop', 'fade', 'show');
-  bodyEl.append(modalBackdrop);
   const titleEl = modalEl.querySelector('.modal-title');
   const descriptionEl = modalEl.querySelector('.modal-body');
   const linkButtonEl = modalEl.querySelector('.full-article');
   linkEl.classList.remove('fw-bold');
   linkEl.classList.add('fw-normal');
-  modalEl.removeAttribute('aria-hidden');
-  modalEl.setAttribute('aria-modal', 'true');
-  modalEl.setAttribute('role', 'dialog');
-  modalEl.setAttribute('style', 'display: block');
-  modalEl.classList.add('show');
   titleEl.textContent = title;
   descriptionEl.textContent = description;
   linkButtonEl.setAttribute('href', link);
-};
-
-const closeModal = (modalEl, bodyEl) => {
-  const modalBackdrop = bodyEl.querySelector('.modal-backdrop');
-  modalBackdrop.remove();
-  bodyEl.classList.remove('modal-open');
-  bodyEl.removeAttribute('style');
-  modalEl.removeAttribute('aria-modal');
-  modalEl.removeAttribute('role');
-  modalEl.setAttribute('aria-hidden', 'true');
-  modalEl.setAttribute('style', 'display: none');
-  modalEl.classList.remove('show');
-};
-
-const renderModal = (value, state) => {
-  const modalEl = document.getElementById('modal');
-  const bodyEl = document.body;
-  if (value === 'opened') {
-    openModal(state, modalEl, bodyEl);
-  }
-  if (value === 'closed') {
-    closeModal(modalEl, bodyEl);
-  }
 };
 
 export default (state, elements, i18nInstance, path, value, prevValue) => {
@@ -172,7 +134,9 @@ export default (state, elements, i18nInstance, path, value, prevValue) => {
       }
       break;
     case 'uiState.modal':
-      renderModal(value, state);
+      if (value === 'opened') {
+        renderModalContent(state, elements.modal);
+      }
       break;
     case 'uiState.readedPosts': {
       const [lastReadedId] = state.uiState.readedPosts;

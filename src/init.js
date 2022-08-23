@@ -1,39 +1,21 @@
 import i18n from 'i18next';
 import onChange from 'on-change';
 import * as yup from 'yup';
-import { isEmpty } from 'lodash';
 import axios from 'axios';
-
+// eslint-disable-next-line no-unused-vars
+import { Modal } from 'bootstrap';
 import view from './view.js';
 import resources from './locales/ru.js';
 import parser from './parser.js';
-import { getNewFeed, getNewPosts } from './normalizeData.js';
+import { addNewFeed, getNewPosts } from './normalizeData.js';
 
 const postsCheckInterval = 5000;
 
-const setListeners = (state) => {
-  const posts = document.querySelector('.posts');
-  const closeButtons = document.querySelectorAll('button[data-bs-dismiss="modal"]');
-  posts.addEventListener('click', (e) => {
-    const postId = e.target.dataset.id;
-    if (postId) {
-      state.uiState.readedPosts.unshift(postId);
-    }
-    if (e.target.hasAttribute('data-bs-toggle')) {
-      e.preventDefault();
-      state.uiState.modal = 'opened';
-    }
-  });
-  closeButtons.forEach((closeBtn) => {
-    closeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      state.uiState.modal = 'closed';
-    });
-  });
-};
+const getAddedLinks = (feeds) => feeds.map((feed) => feed.link);
 
 const checkNewPosts = (state, period = postsCheckInterval) => {
-  const promises = state.links.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+  const addedLinks = getAddedLinks(state.feedsData.feeds);
+  const promises = addedLinks.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
     .then((response) => {
       const { contents } = response.data;
       const parsedData = parser(contents);
@@ -97,15 +79,14 @@ export default () => {
     feeds: document.querySelector('.feeds'),
     posts: document.querySelector('.posts'),
     feedback: document.querySelector('.feedback'),
+    modal: document.getElementById('modal'),
   };
 
   const state = onChange(
     {
-      valid: true,
       processState: 'filling',
       url: '',
       error: null,
-      links: [],
       feedsData: {
         feeds: [],
         posts: [],
@@ -127,27 +108,36 @@ export default () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     state.url = formData.get('url');
+    const addedLinks = getAddedLinks(state.feedsData.feeds);
 
-    validate(state.url, state.links)
-      .then((data) => {
-        state.valid = isEmpty(data);
+    validate(state.url, addedLinks)
+      .then(() => {
         state.processState = 'sending';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
       })
       .then(({ data }) => {
         const parsedData = parser(data.contents);
-        const newFeed = getNewFeed(parsedData.feeds, state.feedsData.feeds);
-        const newPosts = getNewPosts(parsedData.posts, state.feedsData.posts);
-        state.feedsData = {
-          feeds: [...newFeed, ...state.feedsData.feeds],
-          posts: [...newPosts, ...state.feedsData.posts],
-        };
+        const feeds = addNewFeed(parsedData, state.feedsData, state.url);
+        state.feedsData = feeds;
         state.error = '';
-        state.links.push(state.url);
-        setListeners(state);
         state.processState = 'filling';
       })
       .catch((error) => handleErrors(error, state));
+  });
+
+  elements.posts.addEventListener('click', (e) => {
+    const postId = e.target.dataset.id;
+    if (postId) {
+      state.uiState.readedPosts.unshift(postId);
+    }
+    if (e.target.hasAttribute('data-bs-toggle')) {
+      e.preventDefault();
+      state.uiState.modal = 'opened';
+    }
+  });
+
+  elements.modal.addEventListener('hidden.bs.modal', () => {
+    state.uiState.modal = 'closed';
   });
 
   setTimeout(() => checkNewPosts(state), postsCheckInterval);

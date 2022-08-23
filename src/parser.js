@@ -1,9 +1,9 @@
-const genFeeds = (document) => {
+const genFeed = (document) => {
   const titleEl = document.querySelector('channel > title');
   const descriptionEl = document.querySelector('channel > description');
   const title = titleEl.textContent;
   const description = descriptionEl.textContent;
-  const feed = [{ title, description }];
+  const feed = { title, description };
 
   return feed;
 };
@@ -31,9 +31,9 @@ export default (data) => {
   if (errorNode) {
     throw new Error('parsingFailed');
   }
-  const feeds = genFeeds(parsedDocument);
+  const feed = genFeed(parsedDocument);
   const posts = genPosts(parsedDocument);
 
-  const parsedData = { feeds, posts };
+  const parsedData = { feed, posts };
   return parsedData;
 };
