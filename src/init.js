@@ -2,8 +2,7 @@ import i18n from 'i18next';
 import onChange from 'on-change';
 import * as yup from 'yup';
 import axios from 'axios';
-// eslint-disable-next-line no-unused-vars
-import { Modal } from 'bootstrap';
+import 'bootstrap';
 import view from './view.js';
 import resources from './locales/ru.js';
 import parser from './parser.js';
@@ -23,32 +22,33 @@ const checkNewPosts = (state, period = postsCheckInterval) => {
       state.feedsData.posts = [...newPosts, ...state.feedsData.posts];
     }));
 
-  Promise.all(promises).then(() => {
+  Promise.all(promises).finally(() => {
     setTimeout(() => checkNewPosts(state), period);
   });
 };
 
 const handleErrors = (error, state) => {
-  if (error.message === 'parsingFailed') {
-    state.error = 'parsingFailed';
-    state.processState = 'filling';
-    return;
-  }
   if (error.name === 'ValidationError') {
     const { key } = error.message;
     state.error = key;
     return;
   }
+  if (error.message === 'parsingFailed') {
+    state.error = 'parsingFailed';
+    state.processState = 'filling';
+    return;
+  }
   if (error.response) {
     state.error = 'networkError';
+    state.processState = 'filling';
     return;
   }
   if (error.code === 'ECONNABORTED') {
     state.error = 'networkAborted';
+    state.processState = 'filling';
     return;
   }
   state.error = 'unknownError';
-  state.processState = 'filling';
 };
 
 export default () => {
@@ -93,7 +93,7 @@ export default () => {
       },
       uiState: {
         readedPosts: [],
-        modal: 'closed',
+        openedModalId: null,
       },
     },
     (path, value, prevValue) => view(state, elements, i18nInstance, path, value, prevValue),
@@ -119,8 +119,7 @@ export default () => {
         const parsedData = parser(data.contents);
         const feeds = addNewFeed(parsedData, state.feedsData, state.url);
         state.feedsData = feeds;
-        state.error = '';
-        state.processState = 'filling';
+        state.processState = 'loaded';
       })
       .catch((error) => handleErrors(error, state));
   });
@@ -132,12 +131,8 @@ export default () => {
     }
     if (e.target.hasAttribute('data-bs-toggle')) {
       e.preventDefault();
-      state.uiState.modal = 'opened';
+      state.uiState.openedModalId = postId;
     }
-  });
-
-  elements.modal.addEventListener('hidden.bs.modal', () => {
-    state.uiState.modal = 'closed';
   });
 
   setTimeout(() => checkNewPosts(state), postsCheckInterval);

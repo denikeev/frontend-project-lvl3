@@ -1,5 +1,3 @@
-import { isEmpty } from 'lodash';
-
 const renderFeeds = (feeds, feedsContainer, i18nInstance) => {
   feedsContainer.innerHTML = '';
   const feedsTitle = document.createElement('h2');
@@ -39,7 +37,7 @@ const renderPosts = (posts, postsContainer, readedPosts, i18nInstance) => {
     const button = document.createElement('button');
 
     post.classList.add('d-flex', 'list-group-item', 'justify-content-between', 'align-items-start', 'border-0', 'p-0', 'mt-2');
-    link.classList.add(`${isReadedPost(item) ? 'fw-normal' : 'fw-bold'}`);
+    link.classList.add(isReadedPost(item) ? 'fw-normal' : 'fw-bold');
     link.setAttribute('target', '_blank');
     link.setAttribute('href', item.link);
     link.setAttribute('data-id', item.id);
@@ -63,7 +61,7 @@ const renderContent = (elements, state, i18nInstance) => {
   renderPosts(posts, postsContainer, state.uiState.readedPosts, i18nInstance);
 };
 
-const errorKey = {
+const errorKeys = {
   parsingFailed: 'errors.parsing.err',
   networkError: 'errors.network.err',
   networkAborted: 'errors.network.aborted',
@@ -73,30 +71,47 @@ const errorKey = {
   unknownError: 'errors.unknown',
 };
 
-const renderErrors = (elements, value, prevValue, i18nInstance) => {
-  const { feedback } = elements;
-  const fieldHadError = !isEmpty(prevValue);
-  const fieldHasError = !isEmpty(value);
-  const errorText = errorKey[value];
+const renderUrlState = (elements, value, i18nInstance, errorName = null) => {
+  const {
+    feedback,
+    submit,
+    url,
+    form,
+  } = elements;
 
-  if (!fieldHasError && (!fieldHadError || fieldHadError)) {
-    elements.url.classList.remove('is-invalid');
-    feedback.classList.remove('text-danger');
-    feedback.classList.add('text-success');
-    feedback.textContent = i18nInstance.t('status.success');
-    elements.form.reset();
-    elements.url.focus();
-    return;
+  const text = errorKeys[errorName];
+  switch (value) {
+    case 'error':
+      feedback.classList.remove('text-success');
+      feedback.classList.add('text-danger');
+      url.classList.add('is-invalid');
+      feedback.textContent = i18nInstance.t(text);
+      break;
+    case 'filling':
+      submit.disabled = false;
+      url.removeAttribute('readonly');
+      url.classList.remove('is-invalid');
+      feedback.classList.remove('text-success');
+      feedback.classList.add('text-danger');
+      feedback.textContent = i18nInstance.t(text);
+      break;
+    case 'sending':
+      submit.disabled = true;
+      url.setAttribute('readonly', 'true');
+      url.classList.remove('is-invalid');
+      feedback.classList.remove('text-danger');
+      feedback.classList.add('text-success');
+      feedback.textContent = i18nInstance.t('status.loading');
+      break;
+    case 'loaded':
+      feedback.textContent = i18nInstance.t('status.success');
+      submit.disabled = false;
+      url.removeAttribute('readonly');
+      form.reset();
+      url.focus();
+      break;
+    default: throw new Error(`Unknown state: '${value}'!`);
   }
-  if (fieldHadError && fieldHasError) {
-    feedback.textContent = i18nInstance.t(errorText);
-    return;
-  }
-
-  elements.url.classList.add('is-invalid');
-  feedback.classList.remove('text-success');
-  feedback.classList.add('text-danger');
-  feedback.textContent = i18nInstance.t(errorText);
 };
 
 const renderModalContent = (state, modalEl) => {
@@ -114,29 +129,20 @@ const renderModalContent = (state, modalEl) => {
   linkButtonEl.setAttribute('href', link);
 };
 
-export default (state, elements, i18nInstance, path, value, prevValue) => {
+export default (state, elements, i18nInstance, path, value) => {
   switch (path) {
     case 'error': {
-      renderErrors(elements, value, prevValue, i18nInstance);
+      renderUrlState(elements, path, i18nInstance, value);
       break;
     }
     case 'feedsData': case 'feedsData.posts':
       renderContent(elements, state, i18nInstance);
       break;
     case 'processState':
-      if (value === 'sending') {
-        elements.submit.disabled = true;
-        elements.url.setAttribute('readonly', 'true');
-      }
-      if (value === 'filling') {
-        elements.submit.disabled = false;
-        elements.url.removeAttribute('readonly');
-      }
+      renderUrlState(elements, value, i18nInstance, state.error);
       break;
-    case 'uiState.modal':
-      if (value === 'opened') {
-        renderModalContent(state, elements.modal);
-      }
+    case 'uiState.openedModalId':
+      renderModalContent(state, elements.modal);
       break;
     case 'uiState.readedPosts': {
       const [lastReadedId] = state.uiState.readedPosts;

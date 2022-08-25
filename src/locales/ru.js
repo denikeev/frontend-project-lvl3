@@ -18,6 +18,7 @@ export default {
       },
       status: {
         success: 'RSS успешно загружен',
+        loading: 'RSS загружается...',
       },
       posts: {
         name: 'Посты',
