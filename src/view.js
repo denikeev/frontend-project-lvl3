@@ -22,8 +22,8 @@ const renderFeeds = (feeds, feedsContainer, i18nInstance) => {
   feedsContainer.append(feedsTitle, feedsList);
 };
 
-const renderPosts = (posts, postsContainer, readedPosts, i18nInstance) => {
-  const isReadedPost = (post) => readedPosts.includes(post.id);
+const renderPosts = (posts, postsContainer, viewedPostsIds, i18nInstance) => {
+  const isReadedPost = (post) => viewedPostsIds.has(post.id);
   postsContainer.innerHTML = '';
   const postsTitle = document.createElement('h2');
   const postsList = document.createElement('ul');
@@ -58,7 +58,7 @@ const renderContent = (elements, state, i18nInstance) => {
   const { feeds, posts } = state.feedsData;
   const { feeds: feedsContainer, posts: postsContainer } = elements;
   renderFeeds(feeds, feedsContainer, i18nInstance);
-  renderPosts(posts, postsContainer, state.uiState.readedPosts, i18nInstance);
+  renderPosts(posts, postsContainer, state.uiState.viewedPostsIds, i18nInstance);
 };
 
 const errorKeys = {
@@ -115,8 +115,8 @@ const renderUrlState = (elements, value, i18nInstance, errorName = null) => {
 };
 
 const renderModalContent = (state, modalEl) => {
-  const [openedPostId] = state.uiState.readedPosts;
-  const post = state.feedsData.posts.find(({ id }) => id === openedPostId);
+  const [viewableId] = Array.from(state.uiState.viewedPostsIds).slice(-1);
+  const post = state.feedsData.posts.find(({ id }) => id === viewableId);
   const { title, description, link } = post;
   const linkEl = document.querySelector(`a[href="${link}"]`);
   const titleEl = modalEl.querySelector('.modal-title');
@@ -144,9 +144,9 @@ export default (state, elements, i18nInstance, path, value) => {
     case 'uiState.openedModalId':
       renderModalContent(state, elements.modal);
       break;
-    case 'uiState.readedPosts': {
-      const [lastReadedId] = state.uiState.readedPosts;
-      const post = state.feedsData.posts.find(({ id }) => id === lastReadedId);
+    case 'uiState.viewedPostsIds': {
+      const [viewedId] = Array.from(state.uiState.viewedPostsIds).slice(-1);
+      const post = state.feedsData.posts.find(({ id }) => id === viewedId);
       const { link } = post;
       const linkEl = document.querySelector(`a[href="${link}"]`);
       linkEl.classList.remove('fw-bold');

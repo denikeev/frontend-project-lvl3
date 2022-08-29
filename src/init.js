@@ -12,9 +12,16 @@ const postsCheckInterval = 5000;
 
 const getAddedLinks = (feeds) => feeds.map((feed) => feed.link);
 
+const genUrl = (address) => {
+  const url = new URL('/get', 'https://allorigins.hexlet.app');
+  url.searchParams.set('disableCache', true);
+  url.searchParams.set('url', address);
+  return url.toString();
+};
+
 const checkNewPosts = (state, period = postsCheckInterval) => {
   const addedLinks = getAddedLinks(state.feedsData.feeds);
-  const promises = addedLinks.map((link) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+  const promises = addedLinks.map((link) => axios.get(genUrl(link))
     .then((response) => {
       const { contents } = response.data;
       const parsedData = parser(contents);
@@ -92,7 +99,7 @@ export default () => {
         posts: [],
       },
       uiState: {
-        readedPosts: [],
+        viewedPostsIds: new Set(),
         openedModalId: null,
       },
     },
@@ -113,7 +120,7 @@ export default () => {
     validate(state.url, addedLinks)
       .then(() => {
         state.processState = 'sending';
-        return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(state.url)}`, { timeout: 10000 });
+        return axios.get(genUrl(state.url), { timeout: 30000 });
       })
       .then(({ data }) => {
         const parsedData = parser(data.contents);
@@ -127,7 +134,7 @@ export default () => {
   elements.posts.addEventListener('click', (e) => {
     const postId = e.target.dataset.id;
     if (postId) {
-      state.uiState.readedPosts.unshift(postId);
+      state.uiState.viewedPostsIds.add(postId);
     }
     if (e.target.hasAttribute('data-bs-toggle')) {
       e.preventDefault();
