@@ -71,7 +71,7 @@ const errorKeys = {
   unknownError: 'errors.unknown',
 };
 
-const renderUrlState = (elements, value, i18nInstance, errorName = null) => {
+const renderUrlState = (elements, value, i18nInstance, errorName) => {
   const {
     feedback,
     submit,
@@ -122,8 +122,8 @@ const renderModalContent = (state, modalEl) => {
   const titleEl = modalEl.querySelector('.modal-title');
   const descriptionEl = modalEl.querySelector('.modal-body');
   const linkButtonEl = modalEl.querySelector('.full-article');
-  linkEl.classList.remove('fw-bold');
-  linkEl.classList.add('fw-normal');
+  linkEl?.classList.remove('fw-bold');
+  linkEl?.classList.add('fw-normal');
   titleEl.textContent = title;
   descriptionEl.textContent = description;
   linkButtonEl.setAttribute('href', link);
@@ -149,8 +149,8 @@ export default (state, elements, i18nInstance, path, value) => {
       const post = state.feedsData.posts.find(({ id }) => id === viewedId);
       const { link } = post;
       const linkEl = document.querySelector(`a[href="${link}"]`);
-      linkEl.classList.remove('fw-bold');
-      linkEl.classList.add('fw-normal');
+      linkEl?.classList.remove('fw-bold');
+      linkEl?.classList.add('fw-normal');
       break;
     }
     default:

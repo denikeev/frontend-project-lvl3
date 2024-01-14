@@ -10,13 +10,13 @@ const genFeed = (document) => {
 
 const genPosts = (document) => {
   const itemsEl = document.querySelectorAll('item');
-  const posts = Array.from(itemsEl).map((item) => {
+  const posts = Array.from(itemsEl).map((item: HTMLElement) => {
     const titleEl = item.querySelector('title');
     const descriptionEl = item.querySelector('description');
     const linkEl = item.querySelector('link');
-    const title = titleEl.textContent;
-    const description = descriptionEl.textContent;
-    const link = linkEl.textContent;
+    const title = titleEl?.textContent;
+    const description = descriptionEl?.textContent;
+    const link = linkEl?.textContent;
 
     return { title, description, link };
   });
@@ -24,7 +24,7 @@ const genPosts = (document) => {
   return posts;
 };
 
-export default (data) => {
+export default (data: string) => {
   const parsedDom = new DOMParser();
   const parsedDocument = parsedDom.parseFromString(data, 'application/xml');
   const errorNode = parsedDocument.querySelector('parsererror');

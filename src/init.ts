@@ -1,12 +1,11 @@
-import i18n from 'i18next';
 import onChange from 'on-change';
 import * as yup from 'yup';
 import axios from 'axios';
 import 'bootstrap';
-import view from './view.js';
-import resources from './locales/ru.js';
-import parser from './parser.js';
-import { addNewFeed, getNewPosts } from './normalizeData.js';
+import view from './view';
+import parser from './parser';
+import { addNewFeed, getNewPosts } from './normalizeData';
+import i18nInstance from './i18n';
 
 const postsCheckInterval = 5000;
 
@@ -14,7 +13,7 @@ const getAddedLinks = (feeds) => feeds.map((feed) => feed.link);
 
 const genUrl = (address) => {
   const url = new URL('/get', 'https://allorigins.hexlet.app');
-  url.searchParams.set('disableCache', true);
+  url.searchParams.set('disableCache', 'true');
   url.searchParams.set('url', address);
   return url.toString();
 };
@@ -59,14 +58,6 @@ const handleErrors = (error, state) => {
 };
 
 export default () => {
-  const i18nInstance = i18n.createInstance();
-  const defaultLanguage = 'ru';
-  i18nInstance.init({
-    lng: defaultLanguage,
-    resources,
-    debug: false,
-  });
-
   yup.setLocale({
     mixed: {
       notOneOf: () => ({ key: 'notOneOf' }),
@@ -103,7 +94,7 @@ export default () => {
         openedModalId: null,
       },
     },
-    (path, value, prevValue) => view(state, elements, i18nInstance, path, value, prevValue),
+    (path, value) => view(state, elements, i18nInstance, path, value),
   );
 
   const validate = (currentUrl, urls) => {
@@ -111,10 +102,10 @@ export default () => {
     return schema.validate(currentUrl);
   };
 
-  elements.form.addEventListener('submit', (e) => {
+  elements.form!.addEventListener('submit', (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    state.url = formData.get('url');
+    const formData = new FormData(e.target as HTMLFormElement);
+    state.url = formData.get('url')!.toString();
     const addedLinks = getAddedLinks(state.feedsData.feeds);
 
     validate(state.url, addedLinks)
@@ -128,15 +119,19 @@ export default () => {
         state.feedsData = feeds;
         state.processState = 'loaded';
       })
-      .catch((error) => handleErrors(error, state));
+      .catch((error) => {
+        handleErrors(error, state);
+        throw new Error(error);
+      });
   });
 
-  elements.posts.addEventListener('click', (e) => {
-    const postId = e.target.dataset.id;
+  elements.posts!.addEventListener('click', (e) => {
+    const targetEl = e.target as HTMLElement;
+    const postId = targetEl.dataset.id;
     if (postId) {
       state.uiState.viewedPostsIds.add(postId);
     }
-    if (e.target.hasAttribute('data-bs-toggle')) {
+    if (targetEl.hasAttribute('data-bs-toggle')) {
       e.preventDefault();
       state.uiState.openedModalId = postId;
     }
